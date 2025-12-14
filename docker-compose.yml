@@ -1,0 +1,67 @@
+services:
+  sniffer-redis:
+    image: redis:alpine
+    container_name: sniffer-redis
+    ports:
+      - "16379:6379"
+    networks:
+      - pipeline_net
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    networks:
+      - pipeline_net
+
+  sniffer:
+    build: ./sniffer
+    container_name: sniffer
+    network_mode: host
+    privileged: true
+    volumes:
+      - /sys/fs/bpf:/sys/fs/bpf
+      - /sys/kernel/debug:/sys/kernel/debug:rw
+    environment:
+      - REDIS_ADDR=localhost:16379
+      - QDRANT_ADDR=localhost:6334
+      - INTERFACE=eth0
+      - THREATFOX_API_KEY=${THREATFOX_API_KEY}
+      - GREYNOISE_API_KEY=${GREYNOISE_API_KEY}
+      - VT_API_KEY=${VT_API_KEY}
+    depends_on:
+      - sniffer-redis
+      - qdrant
+
+  seeder:
+    build:
+      context: .
+      dockerfile: tools/Dockerfile.seeder
+    profiles: ["tools"]
+    networks:
+      - pipeline_net
+    depends_on:
+      - qdrant
+    environment:
+      - QDRANT_ADDR=qdrant:6334
+  monitor:
+    build: 
+      context: monitor/
+      dockerfile: Dockerfile.monitor
+    container_name: ddos-monitor
+    profiles: ["monitor"]
+    ports:
+      - "8501:8501"
+    environment:
+      - REDIS_HOST=sniffer-redis 
+      - REDIS_PORT=6379
+    networks:
+      - pipeline_net
+    depends_on:
+      - sniffer-redis
+
+networks:
+  pipeline_net:
+    driver: bridge
