@@ -1,4 +1,4 @@
-# High-Performance Passive Network Sniffer (JA4 Fingerprinting)
+# High-performance EBPF Passive Sniffer (JA4 Fingerprinting)
 
 This project is a high-performance passive network sniffer designed to capture TLS traffic on port 443, extract JA4 fingerprints, and publish the analysis to a Redis list. It leverages eBPF for efficient kernel-level packet capture and Go for high-concurrency userspace processing.
 
