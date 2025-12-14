@@ -1,0 +1,36 @@
+FROM golang:1.24-bookworm AS builder
+
+WORKDIR /app
+
+# Copy dependency files first
+COPY sniffer/go.mod sniffer/go.sum ./
+RUN go mod download
+
+# Copy the seeder source
+COPY tools/seed_qdrant.go .
+
+# Build the seeder
+# We need to replace the package name in seed_qdrant.go or just run it?
+# It's package main, so `go build` works if we are in the right module context.
+# But go.mod is in /app (copied from sniffer/).
+# seed_qdrant.go imports github.com/qdrant/go-client which is in go.mod.
+RUN go build -o seeder seed_qdrant.go
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install requests for the downloader
+RUN pip install requests
+
+# Copy python downloader
+COPY tools/download_threat_data.py .
+
+# Copy compiled seeder from builder
+COPY --from=builder /app/seeder .
+
+# Wrapper script
+COPY tools/run_seed.sh .
+RUN chmod +x run_seed.sh
+
+CMD ["./run_seed.sh"]
