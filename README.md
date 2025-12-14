@@ -1,4 +1,4 @@
-# High-performance EBPF Passive Sniffer (JA4 Fingerprinting)
+# High-performance EBPF Passive Sniffer (HPES)
 
 This project is a high-performance passive network sniffer designed to capture TLS traffic on port 443, extract JA4 fingerprints, and publish the analysis to a Redis list. It leverages eBPF for efficient kernel-level packet capture and Go for high-concurrency userspace processing.
 
@@ -14,7 +14,7 @@ This project is a high-performance passive network sniffer designed to capture T
 *   **`sniffer`**: The main Go application.
 *   **`sniffer-redis`**: Redis instance for message queuing.
 *   **`qdrant`**: Vector database for fingerprint storage and verification.
-
+* **`monitor`**: A web-server powered by streamlit that consumes redis events.
 ## Prerequisites
 
 *   **Linux Kernel:** Requires a kernel with eBPF support (roughly 4.18+, preferably newer 5.x).
@@ -66,7 +66,7 @@ The system includes a `seeder` tool that automatically downloads known JA4 signa
 Use Docker Compose to build the sniffer image and start the infrastructure:
 
 ```bash
-docker-compose up --build -d
+docker compose --profile monitor --profile tools up -d --build
 ```
 
 ### 2. Verify Operation
@@ -97,6 +97,13 @@ The sniffer publishes JSON data to the `tls_fingerprints` list in Redis. You can
 ```bash
 docker exec -it sniffer-redis redis-cli LPOP tls_fingerprints
 ```
+
+### 5. Dashboards & Access
+You can access the following web interfaces to monitor traffic and manage datasets (live example from our server):
+
+- Live Monitor: Access the real-time monitoring dashboard at [hcn1z1 monitor](https://monitor.hcn1z1.dev).
+
+- Qdrant Dataset: View the vector database collection and manage fingerprints at [hcn1z1 qdrant](https://sniffer.hcn1z1.dev/dashboard).
 
 ## Development (Local Compilation)
 
