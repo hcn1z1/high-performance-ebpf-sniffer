@@ -1,0 +1,14 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install redis streamlit pandas
+
+# Copy your streamlit script (save your python code as monitor.py)
+COPY monitor.py .
+
+# Streamlit runs on 8501 by default
+EXPOSE 8501
+
+CMD ["streamlit", "run", "monitor.py", "--server.address=0.0.0.0"]
