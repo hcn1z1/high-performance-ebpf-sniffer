@@ -1,0 +1,5 @@
+sniffer/sniffer
+tools/seeder
+.env
+tools/tools/data/
+test/
